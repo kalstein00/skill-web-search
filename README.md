@@ -24,6 +24,7 @@ WEB_RELAY_TOKEN=YOUR_SHARED_TOKEN
 ## 공개 호출 계약
 
 - `POST /fetch`: `{"url":"https://example.com"}`, `Authorization: Bearer <token>`.
+- `POST /search`: `{"query":"Python documentation"}`. 동일 인증을 사용하고 `{"ok":true,"results":[{"title":"...","url":"...","snippet":"..."}]}`를 반환합니다. 기본 최대 5개이며 검색 결과가 없다는 명확한 응답만 빈 배열로 반환합니다.
 - 성공: `{"ok":true,"url":"...","text":"...","truncated":false}`. 출처는 최종 URL이며 본문은 최대 20,000자입니다.
 - 실패: `{"ok":false,"error":{"code":"...","message":"..."}}`.
 - 설정 오류 `configuration_error`, 연결 실패 `connection_failed`, 인증 실패 `authentication_failed`, 주소 정책 위반 `address_policy`, 지원 불가 `unsupported`, 접근 차단 `access_blocked`, 시간 초과 `timeout`, 외부 응답 오류 `upstream_error`를 구별합니다.
@@ -31,6 +32,10 @@ WEB_RELAY_TOKEN=YOUR_SHARED_TOKEN
 - 일반 공개 HTML만 지원합니다. PDF·로그인·JavaScript 본문은 지원하지 않으며 판별 가능한 사유를 반환합니다. 사이트별 숨겨진 접근 요건을 완전히 탐지할 수는 없습니다. HTML 전송 크기는 압축 해제 후 4 MB로 제한합니다.
 - 웹 연결의 DNS 결과와 실제 연결 주소를 일치시키며 비공개 주소·IPv6 전환 주소·비표준 숫자 주소 및 그 주소로의 리다이렉트를 차단합니다. 서버의 외부 HTTP 연결은 환경 프록시를 사용하지 않습니다.
 - 애플리케이션은 요청 내용·토큰을 로그나 영속 데이터로 저장하지 않습니다.
+
+검색 개발 환경에서 `PLAYWRIGHT_BROWSERS_PATH`를 저장소의 `.browsers` 절대 경로로 설정한 뒤 `uv run playwright install chromium`으로 전용 브라우저를 준비합니다. 같은 환경변수로 서버를 실행합니다. 검색 API는 사용하지 않습니다. CAPTCHA는 `captcha`, 브라우저 실행 문제는 `browser_error`로 반환하며 CAPTCHA 우회나 자동 재시도를 하지 않습니다. 인식하지 못한 Google 화면은 `upstream_error`입니다. 검색 브라우저의 GET 요청은 공개 주소 검증 전송 계층으로만 처리하고, 직접 네트워크 연결·WebSocket·서비스 워커·미디어 다운로드를 제한합니다. 요청별 임시 프로필은 성공·실패 후 삭제됩니다.
+
+검색 문서의 리다이렉트는 목적지를 다시 검증해 새 브라우저 탐색으로 처리합니다. 브라우저 도구가 리다이렉트 이후 요청을 가로채지 않는 경로를 피하기 위해, 검색 부가 리소스의 리다이렉트는 `unsupported`로 실패합니다.
 
 ## 검증
 

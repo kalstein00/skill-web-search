@@ -61,17 +61,21 @@ class WebResponse:
     body: bytes
 
 
-async def fetch_public(url: str) -> WebResponse:
+async def fetch_public(url: str, *, headers: dict[str, str] | None = None, follow_redirects: bool = True) -> WebResponse:
+    request_headers = headers or {"User-Agent": "Mozilla/5.0 WebRelay/0.1"}
     connector = aiohttp.TCPConnector(resolver=PublicResolver(), use_dns_cache=False, force_close=True)
     async with aiohttp.ClientSession(connector=connector, trust_env=False, cookie_jar=aiohttp.DummyCookieJar(), timeout=aiohttp.ClientTimeout(total=30)) as session:
         for _ in range(11):
             validate_url(url)
-            async with session.get(url, allow_redirects=False, headers={"User-Agent": "Mozilla/5.0 WebRelay/0.1"}) as response:
-                if response.status in (301, 302, 303, 307, 308):
+            async with session.get(url, allow_redirects=False, headers=request_headers) as response:
+                if follow_redirects and response.status in (301, 302, 303, 307, 308):
                     target = response.headers.get("Location")
                     if not target:
                         raise RelayError("upstream_error", "Invalid redirect.", 502)
-                    url = urljoin(url, target)
+                    next_url = urljoin(url, target)
+                    if urlsplit(next_url).netloc != urlsplit(url).netloc:
+                        request_headers = {k: v for k, v in request_headers.items() if k.lower() != "cookie"}
+                    url = next_url
                     continue
                 body = bytearray()
                 async for chunk in response.content.iter_chunked(65536):
