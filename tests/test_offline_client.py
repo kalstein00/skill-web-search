@@ -6,22 +6,31 @@ import sys
 from pathlib import Path
 from urllib.parse import urlsplit
 
+import pytest
 from test_relay import ROOT, running_server
 
 
-def test_skill_client_runs_without_project_sync_or_downloads(tmp_path):
+@pytest.mark.parametrize("python_source", ["installed", "uv-managed"])
+def test_skill_client_runs_without_project_sync_or_downloads(tmp_path, python_source):
     from relay.app import create_app
     from relay.web import WebResponse
 
     async def external_response(url, **kwargs):
         return WebResponse(url, 200, {"content-type": "text/html"}, b"<p>Offline client works</p>")
 
+    python = sys.executable
+    if python_source == "uv-managed":
+        python = os.environ.get("WEB_RELAY_MANAGED_PYTHON")
+        if not python:
+            pytest.skip("Set WEB_RELAY_MANAGED_PYTHON to a pre-provisioned uv-managed Python executable")
+        assert Path(python).is_file()
+
     uv = shutil.which("uv") or str(Path(os.environ["APPDATA"]) / "Python/Python312/Scripts/uv.exe")
     (tmp_path / "pyproject.toml").write_text('[project]\nname="must-not-sync"\nversion="0.0.1"\ndependencies=["package-that-must-never-be-downloaded"]\n')
     with running_server(create_app("test-token", fetch=external_response)) as address:
         (tmp_path / ".env").write_text(f"WEB_RELAY_URL={address}\nWEB_RELAY_TOKEN=test-token\n")
         env = dict(os.environ, UV_CACHE_DIR=str(tmp_path / "empty-cache"), UV_PYTHON_INSTALL_DIR=str(tmp_path / "no-python"), UV_DEFAULT_INDEX="http://127.0.0.1:1/forbidden")
-        completed = subprocess.run([uv, "run", "--offline", "--no-project", "--no-sync", "--no-python-downloads", "--no-managed-python", "--python", sys.executable, str(ROOT / ".cline/skills/web-search/scripts/web_relay_client.py"), "--project-root", str(tmp_path), "fetch", "https://example.org"], cwd=tmp_path, env=env, capture_output=True, text=True, encoding="utf-8", timeout=10, check=False)
+        completed = subprocess.run([uv, "run", "--offline", "--no-project", "--no-sync", "--no-python-downloads", "--python", python, str(ROOT / ".cline/skills/web-search/scripts/web_relay_client.py"), "--project-root", str(tmp_path), "fetch", "https://example.org"], cwd=tmp_path, env=env, capture_output=True, text=True, encoding="utf-8", timeout=10, check=False)
     assert completed.returncode == 0, completed.stderr
     assert json.loads(completed.stdout)["text"] == "Offline client works"
     assert not (tmp_path / ".venv").exists()
@@ -79,7 +88,7 @@ def test_relay_works_when_client_external_sockets_are_denied(tmp_path):
     with running_server(create_app("test-token", fetch=external_response)) as address:
         target = urlsplit(address)
         (tmp_path / ".env").write_text(f"WEB_RELAY_URL={address}\nWEB_RELAY_TOKEN=test-token\n")
-        command = [uv, "run", "--offline", "--no-project", "--no-sync", "--no-python-downloads", "--no-managed-python", "--python", sys.executable, str(ROOT / "tests/limited_client.py"), str(ROOT / ".cline/skills/web-search/scripts/web_relay_client.py"), str(tmp_path), target.hostname, str(target.port), "fetch", "https://example.org"]
+        command = [uv, "run", "--offline", "--no-project", "--no-sync", "--no-python-downloads", "--python", sys.executable, str(ROOT / "tests/limited_client.py"), str(ROOT / ".cline/skills/web-search/scripts/web_relay_client.py"), str(tmp_path), target.hostname, str(target.port), "fetch", "https://example.org"]
         result = subprocess.run(command, cwd=tmp_path, capture_output=True, text=True, encoding="utf-8", timeout=10, check=False)
     assert result.returncode == 0, result.stderr
     assert json.loads(result.stdout)["text"] == "Only relay sockets allowed"

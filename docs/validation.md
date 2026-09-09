@@ -55,9 +55,9 @@
 - Python 감사 훅으로 클라이언트의 외부 DNS·소켓 연결을 거부하고 지정한 중계 주소·포트만 허용한 뒤 uv 오프라인 호출로 본문을 받았습니다. 이는 클라이언트 프로세스에 대한 제한 검증이며 OS 방화벽으로 격리한 별도 내부망 PC 검증은 아닙니다. 테스트 서버는 같은 Windows PC의 루프백 주소를 사용했습니다.
 - Cline 모델 연결은 기존 공급자 설정을 사용하며, 웹 검색 클라이언트의 중계 연결과 별도입니다. 모델·공급자 설정을 변경하지 않았습니다.
 - Cline → 실제 배포 서버 → Google 실행도 수행했습니다. Cline은 `captcha` JSON을 받은 뒤 재시도 없이 중단하고 본문을 가져오지 못했다고 정확히 보고했습니다. 기존 `gpt-5.6-luna / openai-compatible` 설정, 약 22초 소요. 이 실행은 실패 처리의 성공이며 Google 검색·선택 본문 조회 성공 기준은 충족하지 못했습니다.
-- 배포 ZIP은 서버 폴더와 클라이언트 스킬을 포함합니다. 257,645,879바이트이며 ZIP CRC 검사와 SHA-256 일치 검증을 통과했습니다. 해시: `405c9c94426fb15b2ae7cc43ff816e39e610e17cb239cfd4347bc9ecf8a15afd`.
+- 배포 ZIP은 서버 폴더와 클라이언트 스킬을 포함합니다. 257,646,145바이트이며 ZIP CRC 검사와 SHA-256 일치 검증을 통과했습니다. 해시: `9eadeee72776d5c7a477caf193142a5d02c1a795c7ce72745f93f360bd84f73f`.
 - 최종 전체 실행: `WEB_RELAY_BUNDLE_TEST=1`로 `pytest -q`를 실행해 **53 passed, 1 skipped**, 약 169.9초를 기록했습니다. 건너뛴 1개는 명시적 `WEB_RELAY_LIVE=1`이 필요한 라이브 성공 테스트입니다. 앞선 별도 라이브 실행과 Cline 배포본 실행에서 CAPTCHA를 확인했으므로 성공으로 간주하지 않습니다.
-- 최종 mypy(11개 소스 파일), Ruff, 스킬 형식 검사, Git diff 공백 검사가 통과했습니다. 코드는 main 브랜치에 티켓별로 커밋했으며 원격 push나 GitHub 이슈 종료는 수행하지 않았습니다.
+- 최종 mypy(11개 소스 파일), Ruff, 스킬 형식 검사, Git diff 공백 검사가 통과했습니다. 이 시점에는 코드를 main 브랜치에 티켓별로 커밋했으며 원격 push나 GitHub 이슈 종료는 수행하지 않았습니다.
 
 ## Standards
 
@@ -69,6 +69,14 @@
 
 1. 실제 Google 검색 후 선택한 공개 HTML 본문 조회의 성공: 현재 Google CAPTCHA로 차단됩니다. 통제된 응답의 Cline 연동 성공으로 대체하지 않습니다.
 2. 외부 인터넷 접근이 차단된 별도 내부망 Windows PC에서 LAN 서버를 사용하는 배치: 같은 PC의 루프백 연결과 Python 프로세스 소켓 제한까지만 확인했습니다.
-3. Cline·Python이 설치되지 않은 별도 깨끗한 Windows x64 환경: 현재 PC에서 환경변수 제한과 실제 로드 경로만 확인했습니다.
+3. 웹 중계 서버 배포본을 Cline·Python이 설치되지 않은 별도 깨끗한 Windows x64 환경에서 실행: 현재 PC에서 환경변수 제한과 실제 로드 경로만 확인했습니다.
 
 표준 리뷰 0건, 명세상 미충족 검증 3건. 전체 첫 버전 수용 완료를 선언하지 않습니다. Linux·WSL 검증은 사용자가 제외했으므로 위 미충족 항목에 포함하지 않습니다.
+
+## uv 관리 Python 후속 변경
+
+- 내부망 PC의 사전 조건을 Cline·uv 설치와 Python 3.12 이상 사전 준비로 명시했습니다. 인터넷 차단 전에 `uv python install 3.12`로 준비하며, Cline 모델·공급자 설정은 유지합니다. 서버 배포본의 설치 조건은 그대로입니다.
+- 클라이언트 실행에서 `--no-managed-python`을 제거하고 오프라인·프로젝트 동기화 금지·Python 다운로드 금지 옵션을 유지했습니다.
+- 기본 사용자 설치 경로에서 uv의 minor-version 연결 인식이 실패해 `UV_PYTHON_INSTALL_DIR`을 저장소 `.scratch/uv-python`으로 지정하여 Python 3.12.14를 준비했습니다. `uv python find --offline --no-python-downloads --managed-python 3.12`가 반환한 `.scratch/uv-python/cpython-3.12-windows-x86_64-none/python.exe`를 `WEB_RELAY_MANAGED_PYTHON`으로 지정했습니다.
+- 배포 ZIP의 클라이언트 스킬과 START-HERE.md를 갱신하고 ZIP CRC 및 SHA-256을 확인했습니다. 위 ZIP 크기와 해시는 갱신된 배포본 기준입니다.
+- 후속 전체 검증: `WEB_RELAY_MANAGED_PYTHON`과 `WEB_RELAY_BUNDLE_TEST=1`을 지정하여 **54 passed, 1 skipped**, 191.09초. uv 관리 Python으로 빈 캐시·접근 불가능한 패키지 인덱스·존재하지 않는 프로젝트 의존성 아래에서 본문 조회가 성공했고, 추가 Python 설치 디렉터리와 가상환경이 생성되지 않았습니다. 건너뛴 테스트는 기존 라이브 Google 성공 테스트입니다. mypy·Ruff·스킬 형식·Git diff 공백 검사도 통과했습니다.

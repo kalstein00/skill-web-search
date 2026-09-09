@@ -22,7 +22,7 @@ Google CAPTCHA·접근 차단은 실패로 반환하며 우회하지 않습니�
 
 ## 클라이언트
 
-함께 제공하는 `client-skill/web-search`를 내부망 PC 프로젝트의 `.cline/skills/web-search`로 복사합니다. 내부망 PC에는 Python 3.12 이상과 uv가 사전 설치되어 있어야 합니다. 프로젝트 루트 `.env`에 다음 값을 설정합니다.
+함께 제공하는 `client-skill/web-search`를 내부망 PC 프로젝트의 `.cline/skills/web-search`로 복사합니다. 내부망 PC에는 Cline과 uv가 사전 설치되어 있어야 합니다. Python 3.12 이상은 인터넷 차단 전에 `uv python install 3.12`로 준비합니다. 별도 Python 설치 프로그램은 필요하지 않지만, uv만 설치된 오프라인 PC에서는 Python을 내려받을 수 없습니다. 실행파일 경로는 `uv python find --offline --no-python-downloads --managed-python 3.12`로 확인합니다. 프로젝트 루트 `.env`에 다음 값을 설정합니다.
 
 ```dotenv
 WEB_RELAY_URL=http://192.168.1.10:8765

@@ -23,12 +23,12 @@ WEB_RELAY_TOKEN=YOUR_SHARED_TOKEN
 
 ## Cline 스킬 설치
 
-이 저장소의 `.cline/skills/web-search` 폴더 전체를 대상 프로젝트의 동일 위치로 복사합니다. 클라이언트 스크립트가 포함되어 있어 서버 소스나 개발 의존성을 복사할 필요가 없습니다. 프로젝트 루트에 위의 `.env`를 준비하고 Python 3.12 이상과 uv를 사전 설치합니다. Cline의 기존 모델·공급자 설정을 유지합니다.
+이 저장소의 `.cline/skills/web-search` 폴더 전체를 대상 프로젝트의 동일 위치로 복사합니다. 클라이언트 스크립트가 포함되어 있어 서버 소스나 개발 의존성을 복사할 필요가 없습니다. 프로젝트 루트에 위의 `.env`를 준비합니다. 내부망 PC에는 Cline과 uv가 사전 설치되어 있어야 하며, Python 3.12 이상은 인터넷 차단 전에 `uv python install 3.12`로 준비합니다. 별도 Python 설치 프로그램은 필요하지 않습니다. Cline의 기존 모델·공급자 설정을 유지합니다.
 
-스킬은 설치된 Python 경로를 지정하여 다음과 같이 호출합니다.
+스킬은 준비된 Python 경로를 지정하여 다음과 같이 호출합니다. `uv python find --offline --no-python-downloads --managed-python 3.12`로 uv가 관리하는 실행파일의 경로를 확인할 수 있습니다. uv만 설치하고 Python을 준비하지 않은 오프라인 PC에서는 실행할 수 없습니다.
 
 ```text
-uv run --offline --no-project --no-sync --no-python-downloads --no-managed-python --python "C:/path/to/python.exe" "C:/your/project/.cline/skills/web-search/scripts/web_relay_client.py" --project-root "C:/your/project" search "Python documentation"
+uv run --offline --no-project --no-sync --no-python-downloads --python "C:/path/to/python.exe" "C:/your/project/.cline/skills/web-search/scripts/web_relay_client.py" --project-root "C:/your/project" search "Python documentation"
 ```
 
 선택한 본문은 마지막 `search "검색어"`를 `fetch "대상 URL"`로 바꿉니다. 토큰은 명령행에 전달하지 않습니다. Cline은 검색 결과와 본문을 출처로 활용하며 전체 대화나 프로젝트 파일은 서버에 보내지 않습니다. 설정을 고친 뒤 다시 요청하는 결정은 사용자가 합니다.
