@@ -98,7 +98,7 @@ def test_browser_profiles_removed_on_success_and_failure(tmp_path, monkeypatch, 
     observed = []
 
     async def external_response(url, **kwargs):
-        observed.extend(tmp_path.glob("web-relay-request-*"))
+        observed.extend(tmp_path.rglob("web-relay-request-*"))
         html = b'<div class="g-recaptcha"></div>' if blocked else b'<a href="https://example.org"><h3>Example</h3></a>'
         return WebResponse(url, 200, {"content-type": "text/html"}, html)
 
