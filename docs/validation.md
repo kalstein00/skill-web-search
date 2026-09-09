@@ -38,3 +38,13 @@
 - Cline의 터미널에서 사용자 Scripts 경로를 인식하지 못해 이미 설치된 uv 실행파일을 테스트 작업 폴더로 복사했습니다. 모델·공급자는 바꾸지 않았습니다.
 - 최종 실행은 Cline 종료 코드 0, 기존 `gpt-5.6-luna / openai-compatible` 설정으로 성공했습니다. 서버에서 `/search`의 `{"query":"Python documentation"}` 다음 `/fetch`의 `{"url":"https://docs.python.org/3/"}`를 관찰했습니다. Cline은 반환된 내용이 테스트 fixture임을 명시하고 출처 URL을 포함해 답변했습니다. 약 27초 소요.
 - Windows Enterprise x64, OS 빌드 `10.0.26100`. 원본 Cline 이벤트와 요약은 버전 관리에서 제외한 `.scratch/cline-verification`에 보관했습니다.
+
+## #6 Windows 배포본
+
+- PyInstaller 6.22.2로 Windows x64 onedir 배포본을 생성했습니다. Python 3.12.14, FastAPI 0.141.1, aiohttp 3.14.3, Playwright 1.62.0, Chromium 151.0.7922.34를 사용했습니다.
+- 실제 `web-relay.exe`를 다른 작업 디렉터리에서 실행하고 PATH를 Windows System32로 제한했습니다. Python·Cline·uv 관련 환경변수를 제거하고 잘못된 Playwright 브라우저 경로를 주어도 번들 경로가 우선하는지 확인했습니다.
+- 로드한 `python312.dll`은 배포본 `_internal`, 실행한 `chrome.exe`는 배포본 `browsers/chromium-1234` 아래였습니다. 별도 개발 런타임을 참조하지 않았습니다.
+- 배포본 테스트 2개 통과: 토큰 누락 시작 거부, 상태 확인, 내부 주소 차단, 실제 공개 HTML 본문 85자 반환, 번들 Chromium 실행, 요청 후 프로필 정리, 종료 및 로그의 토큰·검색어 부재.
+- 번들 Google 검색은 `captcha` 오류를 반환했습니다. 이는 검색 성공이 아닙니다. 상세 검증 결과는 `build/bundle-validation.json`에 있습니다.
+- 현재 PC에는 Python과 Cline이 설치되어 있습니다. 환경변수 제한과 로드 경로 확인은 별도 깨끗한 Windows PC에서의 검증을 대체하지 않습니다. 해당 환경 검증 및 Google 라이브 검색 성공은 미충족으로 남깁니다.
+- 리뷰에 따라 빌드는 설치된 Playwright가 요구하는 정확한 Chromium 실행파일을 확인하고 해당 리비전만 복사하도록 보완했습니다. 오래된 캐시만 있는 경우 빌드를 거부합니다.

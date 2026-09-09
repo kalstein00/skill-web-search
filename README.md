@@ -6,6 +6,8 @@
 
 Python 3.12 이상과 uv를 준비한 뒤 `uv sync --locked`로 서버 개발 의존성을 설치합니다. 개발 환경 준비에는 인터넷이 필요합니다. 클라이언트 실행은 서버 의존성 없이 가능합니다.
 
+Windows x64 실행파일과 전용 브라우저 배포 방법은 [Windows 배포 안내](docs/windows-distribution.md)를 참고하세요. `uv run python tools/build_windows.py`로 서버 폴더와 독립 클라이언트 스킬을 만듭니다.
+
 서버: `uv run python -m relay --host 127.0.0.1 --port 8765 --token YOUR_SHARED_TOKEN`
 
 LAN에서 사용할 때는 서버의 LAN 수신 주소를 지정하고 운영 환경에 맞게 방화벽을 구성합니다. 서버는 공유 토큰이 없으면 시작하지 않습니다. 첫 버전은 HTTP이며 토큰·검색어·본문을 전송 중 암호화하지 않습니다. 신뢰할 수 있는 사내망에서 운영해야 합니다.
