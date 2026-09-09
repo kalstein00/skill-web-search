@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from test_relay import ROOT, running_server
 
@@ -65,3 +66,20 @@ def test_failure_is_not_retried_and_only_target_is_sent(tmp_path):
     assert received == [{"url": "https://example.org"}]
     assert process.returncode == 1
     assert process.stderr.strip() == "access_blocked"
+
+
+def test_relay_works_when_client_external_sockets_are_denied(tmp_path):
+    from relay.app import create_app
+    from relay.web import WebResponse
+
+    async def external_response(url, **kwargs):
+        return WebResponse(url, 200, {"content-type": "text/html"}, b"<p>Only relay sockets allowed</p>")
+
+    uv = shutil.which("uv") or str(Path(os.environ["APPDATA"]) / "Python/Python312/Scripts/uv.exe")
+    with running_server(create_app("test-token", fetch=external_response)) as address:
+        target = urlsplit(address)
+        (tmp_path / ".env").write_text(f"WEB_RELAY_URL={address}\nWEB_RELAY_TOKEN=test-token\n")
+        command = [uv, "run", "--offline", "--no-project", "--no-sync", "--no-python-downloads", "--no-managed-python", "--python", sys.executable, str(ROOT / "tests/limited_client.py"), str(ROOT / ".cline/skills/web-search/scripts/web_relay_client.py"), str(tmp_path), target.hostname, str(target.port), "fetch", "https://example.org"]
+        result = subprocess.run(command, cwd=tmp_path, capture_output=True, text=True, encoding="utf-8", timeout=10, check=False)
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout)["text"] == "Only relay sockets allowed"

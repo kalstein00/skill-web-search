@@ -2,6 +2,8 @@
 
 `web-relay` 폴더 전체를 인터넷에 접근 가능한 Windows x64 PC에 복사합니다. 실행파일만 따로 옮기면 동작하지 않습니다. Python·Cline·개발 도구를 설치할 필요 없이 포함된 런타임과 전용 Chromium을 사용합니다.
 
+`web-relay-windows-x64.zip`을 받았다면 전체를 압축 해제합니다. 서버와 클라이언트 스킬이 함께 들어 있으며, `.zip.sha256` 파일로 압축 파일의 SHA-256 값을 확인할 수 있습니다.
+
 PowerShell 실행 예시:
 
 ```powershell

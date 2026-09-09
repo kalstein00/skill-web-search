@@ -8,6 +8,7 @@ import platform
 import shutil
 import subprocess
 import sys
+import zipfile
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -50,7 +51,17 @@ def main():
                 "lock_sha256": hashlib.sha256((ROOT / "uv.lock").read_bytes()).hexdigest(),
                 "browsers": [chromium.name]}
     (bundle / "build-manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    archive = output / "web-relay-windows-x64.zip"
+    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as package:
+        for folder in (bundle, output / "client-skill"):
+            for file in sorted(folder.rglob("*")):
+                if file.is_file():
+                    package.write(file, file.relative_to(output))
+    with archive.open("rb") as stream:
+        digest = hashlib.file_digest(stream, "sha256").hexdigest()
+    archive.with_suffix(".zip.sha256").write_text(f"{digest}  {archive.name}\n", encoding="ascii")
     print(f"Ready: {bundle / 'web-relay.exe'}")
+    print(f"Archive: {archive}")
     return 0
 
 
