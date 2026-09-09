@@ -19,6 +19,20 @@ WEB_RELAY_TOKEN=YOUR_SHARED_TOKEN
 
 클라이언트: `python client.py --project-root C:/your/project fetch https://example.com`
 
+## Cline 스킬 설치
+
+이 저장소의 `.cline/skills/web-search` 폴더 전체를 대상 프로젝트의 동일 위치로 복사합니다. 클라이언트 스크립트가 포함되어 있어 서버 소스나 개발 의존성을 복사할 필요가 없습니다. 프로젝트 루트에 위의 `.env`를 준비하고 Python 3.12 이상과 uv를 사전 설치합니다. Cline의 기존 모델·공급자 설정을 유지합니다.
+
+스킬은 설치된 Python 경로를 지정하여 다음과 같이 호출합니다.
+
+```text
+uv run --offline --no-project --no-sync --no-python-downloads --no-managed-python --python "C:/path/to/python.exe" "C:/your/project/.cline/skills/web-search/scripts/web_relay_client.py" --project-root "C:/your/project" search "Python documentation"
+```
+
+선택한 본문은 마지막 `search "검색어"`를 `fetch "대상 URL"`로 바꿉니다. 토큰은 명령행에 전달하지 않습니다. Cline은 검색 결과와 본문을 출처로 활용하며 전체 대화나 프로젝트 파일은 서버에 보내지 않습니다. 설정을 고친 뒤 다시 요청하는 결정은 사용자가 합니다.
+
+프로젝트 스킬 위치는 [Cline 공식 Skills 문서](https://docs.cline.bot/customization/skills)를 따릅니다. 같은 이름의 전역 스킬이 있으면 그 스킬이 우선할 수 있으므로 의도한 프로젝트 스킬이 선택됐는지 확인합니다.
+
 명시한 루트의 설정만 읽으며 부모 디렉터리나 환경변수에서 설정을 가져오지 않습니다. LAN 연결에 시스템 프록시를 사용하지 않으며 서버 리다이렉트도 따르지 않습니다. 자동 재시도하지 않습니다.
 
 ## 공개 호출 계약
@@ -43,6 +57,6 @@ Windows 서버 실행은 Job Object로 브라우저·드라이버 자식 프로�
 
 ## 검증
 
-`uv run pytest`, `uv run mypy`, `uv run ruff check relay client.py tests`.
+`uv run pytest`, `uv run mypy`, `uv run ruff check relay client.py .cline/skills/web-search/scripts tests tools`.
 
 검증 경계는 공개 클라이언트 프로세스 → 실제 HTTP 서버 → JSON 결과입니다. 외부 웹 응답만 통제합니다. Linux 호환 클라이언트 구현은 유지하지만, 사용자 지시에 따라 Linux·WSL 설치와 실행 검증은 제외합니다. Cline 검증에는 기존 모델 설정을 그대로 사용합니다.
